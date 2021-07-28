@@ -8,13 +8,16 @@ import {
   Dimensions,
   Platform,
   SafeAreaView,
+  Linking,
+  Alert
 } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, Polyline, Marker, AnimatedRegion } from 'react-native-maps';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import MapViewDirections from 'react-native-maps-directions';
 import RideSummaryAndDetail from '../../component/RideSummaryAndDetail';
+import database from '@react-native-firebase/database';
+import Geolocation from '@react-native-community/geolocation'
 import { getScheduleRideDetails } from '../service/Api';
-const GOOGLE_MAPS_APIKEY = 'AIzaSyAG8XBFKHqkH3iKweO_y3iC6kYvcwdsKxY';
 import SwipeUpDown from 'react-native-swipe-up-down';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 const { width, height } = Dimensions.get('window');
@@ -23,6 +26,9 @@ const LATITUDE = 33.738045;
 const LONGITUDE = 73.084488;
 const LATITUDE_DELTA = 0.0922;
 const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+const DataBaseRef = database()
+const GOOGLE_MAPS_APIKEY = 'AIzaSyAG8XBFKHqkH3iKweO_y3iC6kYvcwdsKxY';
 
 const MapDetails = ({ navigation, route }) => {
   const rideDetails = route.params.rideDetails
@@ -40,10 +46,17 @@ const MapDetails = ({ navigation, route }) => {
       longitudeDelta: LONGITUDE_DELTA,
     }
   )
+    const [s, setS] = useState(33.6844);
+    const [myLatitude, setMyLatitude] = useState(region.latitude);
+    const [myLongitude, setMyLongitude] = useState(region.longitude);
+    const [myDirection, setMyDirection] = useState({ latitude: 0.000000, longitude: 0.000000, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
+    const [otherDirection, setOtherDirection] = useState(region);
   const origin = { latitude: 33.7201055, longitude: 73.0396641 };
   const destination = {
     latitude: 33.6967808,
-    longitude: 73.0458092
+    longitude: 73.0458092,
+    latitudeDelta: LATITUDE_DELTA,
+      longitudeDelta: LONGITUDE_DELTA,
   };
   // const [coordinates, setCoordinates] = useState(new AnimatedRegion(origin));
 
@@ -52,51 +65,28 @@ const MapDetails = ({ navigation, route }) => {
   useEffect(() => {
     console.log('Ride Details', rideDetails)
     getEstimatedTimeOfArrival();
-    // const duration = 500
-
-    // if (coordinates !== destination) {
-    //   if (Platform.OS === 'android') {
-    //     if (marker) {
-    //       marker.animateMarkerToCoordinate(
-    //         destination,
-    //         duration
-    //       );
-    //     }
-    //   } else {
-    //     coordinate.timing({
-    //       destination,
-    //       duration
-    //     }).start();
-    //   }
-    // }
-    // Geolocation.watchPosition(
-    //   position => {
-    //     const { latitude, longitude } = position.coords;
-    //     const newCoordinate = {
-    //       latitude,
-    //       longitude
-    //     };
-    //     if (Platform.OS === "android") {
-    //       if (this.marker) {
-    //         this.marker._component.animateMarkerToCoordinate(
-    //           newCoordinate,
-    //           500
-    //         );
-    //       }
-    //     } else {
-    //       coordinate.timing(newCoordinate).start();
-    //     }
-
-    //     setRouteCoordinates(newCoordinate)
-    //     setPrevLat(newCoordinate.latitude)
-    //     setPrevLng(newCoordinate.longitude)
-
-    //   },
-    //   error => console.log(error),
-    //   { enableHighAccuracy: true, timeout: 20000, maximumAge: 1000 }
-    // );
+    setMyDirection({ ...region, latitude: Number(region.latitude), longitude: Number(region.longitude) })
+    setOtherDirection({ ...destination, latitude: Number(destination.latitude), longitude: Number(destination.longitude) })
   }, []);
+ 
 
+const buildInAppNavigation = () => {
+  Alert.alert(
+      "Warning",
+      'Do you want to redirect to google app for direction',
+      [{
+          text: "Cancel",
+          onPress: () => { },
+          style: "cancel",
+      },
+      {
+          text: "OK", onPress: () => {
+              seeOnMap()
+          }
+      }
+      ]
+  );
+}
 
   async function getEstimatedTimeOfArrival() {
 
@@ -126,6 +116,18 @@ const MapDetails = ({ navigation, route }) => {
     }
   }
 
+  const seeOnMap = () => {
+    const locationStart = `${Number(73.0396641)},${Number(73.0396641)}`
+    const scheme = Platform.select({ ios: `maps:${locationStart}?q=`, android: `geo:${locationStart}?q=` });
+    const latLng = `${Number(73.0396641)},${Number(73.0396641)}`;
+    const label = 'G11 Markaz';
+    const url = Platform.select({
+        ios: `${scheme}${label}&ll=${latLng}`,
+        android: `${scheme}${latLng}(${label})`
+    });
+    Linking.openURL(url);
+}
+
   return (
     <SafeAreaView
       style={{
@@ -133,33 +135,6 @@ const MapDetails = ({ navigation, route }) => {
         backgroundColor: '#38ef7d',
       }}>
       <View style={styles.container}>
-        <View
-          style={{
-            position: 'absolute',
-            flexDirection: 'row',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-            zIndex: 1,
-            elevation: 10,
-            padding: 5,
-            borderTopLeftRadius: 20,
-            borderBottomLeftRadius: 20,
-            borderBottomRightRadius: 20,
-            height: 40,
-            width: '90%',
-            marginTop: 80,
-            backgroundColor: '#ffff',
-          }}>
-          <Ionicons
-            style={{ marginLeft: 10 }}
-            name={'ellipse'}
-            size={15}
-            color={'#38ef7d'}
-          />
-          <Text style={{ fontSize: 15, marginLeft: 5 }}>
-            {'Your driver is arrived'}
-          </Text>
-        </View>
         <MapView
           ref={mapRef}
           initialRegion={region}
@@ -252,7 +227,7 @@ const MapDetails = ({ navigation, route }) => {
         <SwipeUpDown
           swipeHeight={60}
           itemMini={
-            <View style={{ height: '100%', width: 400, backgroundColor: '#38ef7d', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ height: '100%', width: 420, backgroundColor: '#38ef7d', alignItems: 'center', justifyContent: 'center' }}>
               <MaterialIcons
                 style={{ marginLeft: 10, marginBottom: 12 }}
                 name={'keyboard-arrow-up'}
@@ -260,7 +235,7 @@ const MapDetails = ({ navigation, route }) => {
               />
             </View>
           } // Pass props component when collapsed
-          itemFull={<RideSummaryAndDetail navigation={navigation} rideInfo={rideDetails} />} // Pass props component when show full
+          itemFull={<RideSummaryAndDetail navigation={navigation} rideInfo={rideDetails} actionforMap={()=> buildInAppNavigation()}/>} // Pass props component when show full
           disablePressToShow={false} // Press item mini to show full
           style={{ backgroundColor: 'background:rgba(255,255,255, 0.3)', justifyContent: 'center', alignItems: 'center' }} // style for swipe
           animation="easeInEaseOut"

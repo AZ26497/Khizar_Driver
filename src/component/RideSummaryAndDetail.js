@@ -47,7 +47,11 @@ export default class RideSummaryAndDetail extends Component {
           </View>
         </View>
 
-        <GradientButton height={50} title={'Arrived'} width={'100%'} style={{ alignSelf: 'center' }} />
+
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', width: '100%' }}>
+                <GradientButton height={50} title={'Use GoogleMap'} width={'40%'} style={{ alignSelf: 'flex-end' }} action={this.props.actionforMap}/>
+                <GradientButton height={50} title={'Arrived'} width={'40%'} style={{ alignSelf: 'center' }} />
+              </View>
 
       </View>
       </TouchableOpacity >
