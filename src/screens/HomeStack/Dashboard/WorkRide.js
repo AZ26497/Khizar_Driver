@@ -78,12 +78,12 @@ const WorkRide = ({ navigation }) => {
           <WorkRideListItem action={()=>setModalVisible(true)}/>
           </View> */}
 
-          <View style={{ flex: 1, marginLeft: 10, marginRight: 10,arginTop: (Platform.OS === 'ios' ? 50 : 60), marginBottom: 10 }}>
+          <View style={{ flex: 1, marginLeft: 10, marginRight: 10,marginTop: (Platform.OS === 'ios' ? 50 : 60), marginBottom: 10 }}>
             {rideList.length == 0 ? <Text style={{ fontSize: 20, color: 'white' }}>Currently No Scheduled Rides</Text> :
               <FlatList
                 data={rideList}
                 renderItem={(item) =>
-                  <WorkRideListItem />
+                  <WorkRideListItem action={()=>navigation.navigate('MapDetail', {rideDetails:item})}/>
                 }
               />
             }

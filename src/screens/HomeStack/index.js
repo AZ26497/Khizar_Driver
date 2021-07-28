@@ -8,7 +8,7 @@ import Wallet from '../bottomTabScreens/Wallet';
 import History from '../bottomTabScreens/History';
 import WorkRide from './Dashboard/WorkRide';
 import CustomAlert from '../../common/CustomAlert';
-
+import MapDetails from './MapDetails'
 const bottomTabStack = createMaterialBottomTabNavigator()
 const Stack = createStackNavigator()
 
@@ -88,6 +88,14 @@ export default HomeStack = () => (
       }}>
         <Stack.Screen name="Home" children={bottomStackScreen} />
         <Stack.Screen name="CustomAlert" component={CustomAlert} />
+        <Stack.Screen name="MapDetail" component={MapDetails} options={{
+            title: 'Detail',
+            headerShown: true,
+            headerTransparent: true,
+            headerBackTitle:'',
+            headerTitleStyle: { alignSelf: 'center', color: 'black', marginRight: 15, fontWeight: 'bold', fontSize: 25 },
+
+          }} />
         <Stack.Screen name="WorkRide" children={WorkRide} options={{
             title: 'Ride List',
             headerShown: true,
