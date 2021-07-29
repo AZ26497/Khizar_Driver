@@ -24,6 +24,8 @@ pod 'Firebase/Analytics'
 
   pod 'react-native-geolocation', :path => '../node_modules/@react-native-community/geolocation'
 
+  pod 'ReactNativeGetLocation', :path => '../node_modules/react-native-get-location'
+
   target 'khizar_DriverTests' do
     inherit! :complete
     # Pods for testing

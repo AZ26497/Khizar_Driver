@@ -21,7 +21,7 @@ const windowHeight = Dimensions.get('window').height;
 export default class RideSummaryAndDetail extends Component {
   render() {
     return (
-      <TouchableOpacity style={{marginBottom:10,height:'37%', bottom:40, position:'absolute', width:'100%'}} onPress={this.props.action}>
+      <TouchableOpacity style={{marginBottom:10,flex:1, bottom:30, position:'absolute', width:'100%'}} onPress={this.props.action}>
         <View style={styles.container}>
 
             <View style={{ flexDirection: 'row', justifyContent: 'space-between'}}>
@@ -48,9 +48,9 @@ export default class RideSummaryAndDetail extends Component {
         </View>
 
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', width: '100%' }}>
-                <GradientButton height={50} title={'Use GoogleMap'} width={'40%'} style={{ alignSelf: 'flex-end' }} action={this.props.actionforMap}/>
-                <GradientButton height={50} title={'Arrived'} width={'40%'} style={{ alignSelf: 'center' }} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', width: '100%', marginBottom:10 }}>
+                <GradientButton height={50} title={'Use GoogleMap'} width={'45%'} style={{ alignSelf: 'flex-end' }} action={()=>this.props.actionforMap}/>
+                <GradientButton height={50} title={'Arrived'} width={'45%'} style={{ alignSelf: 'center' }} action={()=>console.log('Arrived')}/>
               </View>
 
       </View>

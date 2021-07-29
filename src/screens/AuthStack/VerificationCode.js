@@ -36,9 +36,10 @@ const VerificationCode = ({ navigation, route }) => {
         }
     };
 
-    const verifyOTPCode = (code, type) => {
+    const verifyOTPCode = async(code, type) => {
         setLoading(true)
-        console.log('Code type', type)
+        let fcmToken = await AsyncStorage.getItem('fcmToken');
+        console.log('fcmToken on Verification call', fcmToken)
         if (type == 'resend') {
             timerFunc()
         }
@@ -47,7 +48,9 @@ const VerificationCode = ({ navigation, route }) => {
             var data = {
 
                 phone: '03349081615',
-                otp: code
+                otp: code,
+                deviceToken:fcmToken
+
             }
         } else {
             data = {

@@ -20,6 +20,8 @@ import Geolocation from '@react-native-community/geolocation'
 import { getScheduleRideDetails } from '../service/Api';
 import SwipeUpDown from 'react-native-swipe-up-down';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import GetLocation from 'react-native-get-location';
+
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
 const LATITUDE = 33.738045;
@@ -40,53 +42,63 @@ const MapDetails = ({ navigation, route }) => {
   const [routeCoordinates, setRouteCoordinates] = useState([])
   const [region, setRegion] = useState(
     {
-      latitude:73.0396641,
-      longitude:33.7201055,
+      latitude: 73.0396641,
+      longitude: 33.7201055,
       latitudeDelta: LATITUDE_DELTA,
       longitudeDelta: LONGITUDE_DELTA,
     }
   )
-    const [s, setS] = useState(33.6844);
-    const [myLatitude, setMyLatitude] = useState(region.latitude);
-    const [myLongitude, setMyLongitude] = useState(region.longitude);
-    const [myDirection, setMyDirection] = useState({ latitude: 0.000000, longitude: 0.000000, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
-    const [otherDirection, setOtherDirection] = useState(region);
+  const [s, setS] = useState(33.6844);
+  const [myLatitude, setMyLatitude] = useState(region.latitude);
+  const [myLongitude, setMyLongitude] = useState(region.longitude);
+  const [myDirection, setMyDirection] = useState({ latitude: 0.000000, longitude: 0.000000, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
+  const [otherDirection, setOtherDirection] = useState(region);
   const origin = { latitude: 33.7201055, longitude: 73.0396641 };
   const destination = {
     latitude: 33.6967808,
     longitude: 73.0458092,
     latitudeDelta: LATITUDE_DELTA,
-      longitudeDelta: LONGITUDE_DELTA,
+    longitudeDelta: LONGITUDE_DELTA,
   };
   // const [coordinates, setCoordinates] = useState(new AnimatedRegion(origin));
 
-  const mapRef = useRef()
+  const mapRef = useRef(null)
 
   useEffect(() => {
     console.log('Ride Details', rideDetails)
     getEstimatedTimeOfArrival();
+    onLatLongValueChanged()
+    GetLocationftn()
     setMyDirection({ ...region, latitude: Number(region.latitude), longitude: Number(region.longitude) })
     setOtherDirection({ ...destination, latitude: Number(destination.latitude), longitude: Number(destination.longitude) })
   }, []);
- 
 
-const buildInAppNavigation = () => {
-  Alert.alert(
+  const GetLocationftn = () => {
+    GetLocation.getCurrentPosition({
+      enableHighAccuracy: true,
+      timeout: 15000,
+    }).then(async (location) => {
+      // setMyDirection({ ...region, latitude: location.latitude, longitude: location.longitude})
+    })
+  }
+
+  const buildInAppNavigation = () => {
+    Alert.alert(
       "Warning",
       'Do you want to redirect to google app for direction',
       [{
-          text: "Cancel",
-          onPress: () => { },
-          style: "cancel",
+        text: "Cancel",
+        onPress: () => { },
+        style: "cancel",
       },
       {
-          text: "OK", onPress: () => {
-              seeOnMap()
-          }
+        text: "OK", onPress: () => {
+          seeOnMap()
+        }
       }
       ]
-  );
-}
+    );
+  }
 
   async function getEstimatedTimeOfArrival() {
 
@@ -115,6 +127,14 @@ const buildInAppNavigation = () => {
       console.error(error);
     }
   }
+  const onLatLongValueChanged = () => {
+
+    if (mapRef.current && mapRef.current.animateCamera) {
+      mapRef.current.animateCamera({ center: region, pitch: 2, heading: 20, altitude: 200, zoom: 5 }, 1000)
+    }
+    setOtherDirection({ latitude: Number(region.latitude), longitude: Number(region.longitude), latitudeDelta: 0.0922, longitudeDelta: 0.0421, })
+
+  };
 
   const seeOnMap = () => {
     const locationStart = `${Number(73.0396641)},${Number(73.0396641)}`
@@ -122,11 +142,11 @@ const buildInAppNavigation = () => {
     const latLng = `${Number(73.0396641)},${Number(73.0396641)}`;
     const label = 'G11 Markaz';
     const url = Platform.select({
-        ios: `${scheme}${label}&ll=${latLng}`,
-        android: `${scheme}${latLng}(${label})`
+      ios: `${scheme}${label}&ll=${latLng}`,
+      android: `${scheme}${latLng}(${label})`
     });
     Linking.openURL(url);
-}
+  }
 
   return (
     <SafeAreaView
@@ -140,9 +160,9 @@ const buildInAppNavigation = () => {
           initialRegion={region}
           style={StyleSheet.absoluteFill}
           onRegionChange={region => {
-            setRegion({region});
-        }}
-          >
+            setRegion({ region });
+          }}
+        >
           {/* <Marker.Animated
             ref={marker => { this.marker = marker }}
             coordinate={coordinate}
@@ -207,7 +227,7 @@ const buildInAppNavigation = () => {
               console.log('Duration in Min', result.duration)
 
               mapRef.current.fitToCoordinates(result.coordinates, {
-             
+
               })
             }}
 
@@ -235,7 +255,7 @@ const buildInAppNavigation = () => {
               />
             </View>
           } // Pass props component when collapsed
-          itemFull={<RideSummaryAndDetail navigation={navigation} rideInfo={rideDetails} actionforMap={()=> buildInAppNavigation()}/>} // Pass props component when show full
+          itemFull={<RideSummaryAndDetail navigation={navigation} rideInfo={rideDetails} actionforMap={() => buildInAppNavigation()} />} // Pass props component when show full
           disablePressToShow={false} // Press item mini to show full
           style={{ backgroundColor: 'background:rgba(255,255,255, 0.3)', justifyContent: 'center', alignItems: 'center' }} // style for swipe
           animation="easeInEaseOut"
