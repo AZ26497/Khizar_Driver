@@ -22,7 +22,7 @@ function App() {
     });
     // Register background handler
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  console.log('Message handled in the background!', remoteMessage);
+  Alert.alert('A new FCM message arrived In background', JSON.stringify(remoteMessage));
 });
   }, []);
 

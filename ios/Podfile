@@ -7,6 +7,8 @@ target 'khizar_Driver' do
   rn_maps_path = '../node_modules/react-native-maps'
 pod 'react-native-google-maps', :path => rn_maps_path
 pod 'Firebase/Analytics'
+pod 'Firebase/Core'
+pod 'Firebase/Messaging'
 
   config = use_native_modules!
   use_react_native!(
