@@ -18,11 +18,15 @@ function App() {
     createNotificationListeners();
   
     messaging().onMessage(async remoteMessage => {
-      Alert.alert('A new FCM message arrived!', JSON.stringify(remoteMessage));
+      // const { notification, data } = remoteMessage;
+      // const { title, body, } = notification
+      // showAlert(title, body);
     });
     // Register background handler
 messaging().setBackgroundMessageHandler(async remoteMessage => {
-  Alert.alert('A new FCM message arrived In background', JSON.stringify(remoteMessage));
+  // const { notification, data } = remoteMessage;
+  // const { title, body, } = notification
+  // showAlert(title, body);
 });
   }, []);
 
@@ -48,20 +52,21 @@ messaging().setBackgroundMessageHandler(async remoteMessage => {
   this.notificationOpenedListener = messaging().setBackgroundMessageHandler(async remoteMessage => {
       console.log("createNotificationListenersLatest", "notificationOpenedListener-remoteMessage", JSON.stringify(remoteMessage))
       const { notification, data } = remoteMessage
-      const { title } = notification
+      const { title, body, } = notification
+      showAlert(title, body);
   });
   this.quitStateListener = messaging().getInitialNotification().then(async remoteMessage => {
       if (remoteMessage) {
           const { notification, data } = remoteMessage
-          const { title } = notification
-          console.log('Notification caused app to open from quit state:');
+          const { title, body, } = notification
+          showAlert(title, body);
       }
   });
   this.backgroundStateListener = messaging().onNotificationOpenedApp(async remoteMessage => {
       if (remoteMessage) {
           const { notification, data } = remoteMessage
-          const { title } = notification
-          console.log('Notification caused app to open from backgroundStateListener:');
+          const { title, body, } = notification
+          showAlert(title, body);
       }
   });
 }

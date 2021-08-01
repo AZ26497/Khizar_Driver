@@ -14,45 +14,39 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import Moment from 'moment';
 import { Avatar, Badge } from 'react-native-elements';
 import GradientButton from '../common/GradientButton'
+import { getTime, getDate } from '../common/Index';
 
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
-export default class RideSummaryAndDetail extends Component {
+export default class HistoryListItem extends Component {
   render() {
     return (
-      <TouchableOpacity style={{marginBottom:10,flex:1, bottom:0, position:'absolute', width:'100%'}} onPress={this.props.action}>
+      <TouchableOpacity style={{marginBottom:10}} onPress={this.props.action}>
         <View style={styles.container}>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between'}}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between',alignItems:'center'}}>
               <Avatar
                 rounded
                 size={80}
-                  source={require('../../assets/images/Avatar.png')}
+                source={require('../../assets/images/Avatar.png')}
               />
-              <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'space-around', width: 100 }}>
-                <GradientButton height={40} title={'Call'} width={'100%'} style={{ alignSelf: 'flex-end' }} />
+              <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'space-around', width: 100, height:50}}>
+              <Text style={[styles.text,{color:'black',fontSize:20}]}>Completed</Text>
                 <Text style={[styles.text, { marginTop: 20 }]}>2.5 KM</Text>
               </View>
             </View> 
         <View style={{marginBottom:10}}>
-          <Text style={[styles.text,{color:'black'}]}>Customer</Text>
+          <Text style={[styles.text,{color:'black'}]}>{this.props.rideDetails.passenger.fullname}</Text>
           <View style={styles.detalView}>
             <Text style={styles.text}>Pickup</Text>
-            <Text>Allama Iqbal Town Lahore</Text>
+            <Text>{this.props.rideDetails.pickLocation}</Text>
           </View>
           <View style={styles.detalView}>
             <Text style={styles.text}>Drop Off</Text>
-            <Text>Allama Iqbal International Airport, Lahore</Text>
+            <Text>{this.props.rideDetails.dropLocation}</Text>
           </View>
         </View>
-
-
-        {/* <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', width: '100%', marginBottom:10 }}>
-                <GradientButton height={50} title={'Use GoogleMap'} width={'45%'} style={{ alignSelf: 'flex-end' }} action={this.props.actionforMap}/>
-                <GradientButton height={50} title={this.props.statusBtnText} width={'45%'} style={{ alignSelf: 'center' }} action={this.props.actionOnArrived}/>
-              </View> */}
-
       </View>
       </TouchableOpacity >
 
@@ -62,7 +56,6 @@ export default class RideSummaryAndDetail extends Component {
 
 const styles = StyleSheet.create({
   container: {
-    flex:1,
     width: '100%',
     borderWidth: 1,
     borderColor: 'gray',

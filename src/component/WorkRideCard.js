@@ -52,14 +52,14 @@ export default class WorkRideCard extends Component {
             </View>
           }
         <View style={{marginBottom:10}}>
-          <Text style={[styles.text,{color:'black'}]}>Customer</Text>
+          <Text style={[styles.text,{color:'black'}]}>{this.props.rideDetails.passenger.fullname}</Text>
           <View style={styles.detalView}>
             <Text style={styles.text}>Pickup</Text>
-            <Text>Allama Iqbal Town Lahore</Text>
+            <Text>{this.props.rideDetails.dropLocation}</Text>
           </View>
           <View style={styles.detalView}>
             <Text style={styles.text}>Drop Off</Text>
-            <Text>Allama Iqbal International Airport, Lahore</Text>
+            <Text>{this.props.rideDetails.pickLocation}</Text>
           </View>
         </View>
       </View>

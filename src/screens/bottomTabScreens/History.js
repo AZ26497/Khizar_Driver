@@ -1,42 +1,45 @@
-import React, { Component } from 'react';
+import React, { Component, useEffect, useState } from 'react';
 import { StyleSheet, Text, View, FlatList, SafeAreaView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import WorkRideListItem from '../../component/WorkRideCard'
+import HistoryListItem from '../../component/HistoryListItem';
+import {getCompletedRideList} from '../../service/Api'
+import Loader from '../../service/Loader'
 
-
-const History = () => {
-
+const History = ({navigation}) => {
+  const [rideList, setRideList] = useState([])
+  const [loading, setLoading] = useState('true')
+ 
+  useEffect(() => {
+    const willFocusSubscription = navigation.addListener('focus', () => {
+      setLoading(true)
+      getList()
+    });
+    return willFocusSubscription;
+  }, [navigation]);
+  const getList = () => {
+    getCompletedRideList().then((response) => {
+      if (response.status === 1) {
+        console.log('Ride Data', response.data)
+        setLoading(false)
+        setRideList(response.data)
+      }
+      else {
+        setLoading(false)
+        alert(response.status)
+      }
+    }).catch((error) => {
+      setLoading(false)
+      alert(error)
+    })
+  }
   const renderItem = ({ item }) => (
-    <WorkRideListItem listType={'completed'}/>
-
+    <HistoryListItem rideDetails={item}/>
   );
-  const DATA = [
-    {
-      id: 'bd7acbea-c1b1-46c2-aed5-3ad53abb28ba',
-      title: 'First Item',
-    },
-    {
-      id: '3ac68afc-c605-48d3-a4f8-fbd91aa97f63',
-      title: 'Second Item',
-    },
-    {
-      id: '58694a0f-3da1-471f-bd96-145571e29d72',
-      title: 'Third Item',
-    },
-    {
-      id: '58694a0f-3da1-471f-bd96-145571e29d89',
-      title: 'Third Item',
-    },
-    {
-      id: '58694a0f-3da1-471f-bd96-145571e29d67',
-      title: 'Third Item',
-    },
-  ];
-
   return (
     <SafeAreaView style={{
       flex: 1, backgroundColor: '#38ef7d'
     }}>
+       {loading ? <Loader /> : (
       <LinearGradient
         // Background Linear Gradient
         colors={['#38ef7d', '#11998e']}
@@ -46,15 +49,17 @@ const History = () => {
           <Text style={{ fontWeight: 'bold', color: 'white', height: 30, fontSize: 25, alignSelf: 'center', marginBottom:10, marginTop:10 }}>Completed Rides</Text>
           <View style={{ flex: 1, marginLeft: 10, marginRight: 10, marginTop: 10, marginBottom: 10 }}>
 
-            <FlatList
-              data={DATA}
-              renderItem={renderItem}
-              keyExtractor={item => item.id}
-            />
-
+          {rideList.length == 0 ? <Text style={{ fontSize: 20, color: 'white' }}>Currently No Ride History</Text> :
+                <FlatList
+                  data={rideList}
+                  renderItem={renderItem}
+                  keyExtractor={item => item.id}
+                />
+              }
           </View>
         </View>
       </LinearGradient>
+       )}
     </SafeAreaView>
   )
 }

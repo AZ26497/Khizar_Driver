@@ -106,7 +106,7 @@ export const getScheduledRideList = async () => {
                 'Authorization': newOne,
             },
         }).then(response => {
-            console.log('API', 'Get Scheduled Ride list ', response);
+            // console.log('API', 'Get Scheduled Ride list ', response.data.data);
             resolve(response.data);
         }).catch(error => {
             console.log('API', 'Get Scheduled Ride list error', error);
@@ -162,7 +162,7 @@ export const getStartedRideDetail = async () => {
     const AUTH_TOKEN = await getToken()
     const newOne = 'Bearer '+JSON.parse(AUTH_TOKEN)
     return new Promise((resolve, reject) => {
-        axios.get(('http://162.0.236.163:8000/schedule/started'), {
+        axios.get((BASE_URL+'/schedule/started'), {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded',
                 'Authorization': newOne,
@@ -172,6 +172,55 @@ export const getStartedRideDetail = async () => {
             resolve(response.data);
         }).catch(error => {
             console.log('API', 'Started RIDE DETAILS Error', error);
+            reject(error);
+        });
+    });
+}
+
+export const changeRideStatusCall = async (folderID,data) => {
+    const AUTH_TOKEN = await getToken()
+    const newOne = 'Bearer '+JSON.parse(AUTH_TOKEN)
+    console.log('Tooooooken of API' , newOne)
+    return new Promise((resolve, reject) => {
+        var qs = require('qs');
+        var data1 = qs.stringify(
+            data
+        );
+        axios.put((BASE_URL+'/schedule/changeStatus/'+folderID), 
+            data1,{
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'Authorization': newOne,
+                },
+            }).then(response => {
+                console.log('API', 'Change status response', response);
+                resolve(response.data);
+            }).catch(error => {
+                console.log('API', 'Change status error', error);
+                reject(error);
+            });
+        });
+}
+
+export const saveAmountInKhizarWallet = async (folderID,data) => {
+    const AUTH_TOKEN = await getToken()
+    const newOne = 'Bearer '+JSON.parse(AUTH_TOKEN)
+    return new Promise((resolve, reject) => {
+        var qs = require('qs');
+        var data1 = qs.stringify(
+            data
+        );
+        axios.put((BASE_URL+'/schedule/collectPayment/'+folderID), 
+            data1,{
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': newOne,
+            },
+        }).then(response => {
+            console.log('Get Fare api call response', response.data)
+            resolve(response.data);
+        }).catch(error => {
+            console.log('Get Fare api call Error', error)
             reject(error);
         });
     });

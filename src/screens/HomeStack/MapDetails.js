@@ -16,11 +16,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import MapViewDirections from 'react-native-maps-directions';
 import RideSummaryAndDetail from '../../component/RideSummaryAndDetail';
 import database from '@react-native-firebase/database';
-import Geolocation from '@react-native-community/geolocation'
-import { getScheduleRideDetails } from '../service/Api';
+import { getScheduleRideDetails, changeRideStatusCall } from '../../service/Api';
 import SwipeUpDown from 'react-native-swipe-up-down';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
 import GetLocation from 'react-native-get-location';
+import GradientButton from '../../common/GradientButton'
+import Loader from '../../service/Loader';
 
 const { width, height } = Dimensions.get('window');
 const ASPECT_RATIO = width / height;
@@ -35,10 +36,12 @@ const GOOGLE_MAPS_APIKEY = 'AIzaSyAG8XBFKHqkH3iKweO_y3iC6kYvcwdsKxY';
 const MapDetails = ({ navigation, route }) => {
   const rideDetails = route.params.rideDetails
   const [swipeUp, setSwipeUp] = useState(false)
+  const [loading, setLoading] = useState(false)
+
   const [prevLat, setPrevLat] = useState(0)
   const [prevLng, setPrevLng] = useState(0)
   const [estimatedTime, setEstimatedTime] = useState('')
-  const [distanceTravelled, setDistanceTravelled] = useState(0)
+  const [distanceDuration, setDistanceDuration] = useState(0)
   const [routeCoordinates, setRouteCoordinates] = useState([])
   const [region, setRegion] = useState(
     {
@@ -49,11 +52,13 @@ const MapDetails = ({ navigation, route }) => {
     }
   )
   const [s, setS] = useState(33.6844);
+  const [statusBtnText, setStatusBtnText] = useState('Arrived');
   const [myLatitude, setMyLatitude] = useState(region.latitude);
   const [myLongitude, setMyLongitude] = useState(region.longitude);
   const [myDirection, setMyDirection] = useState({ latitude: 0.000000, longitude: 0.000000, latitudeDelta: 0.0922, longitudeDelta: 0.0421 });
   const [otherDirection, setOtherDirection] = useState(region);
-  const origin = { latitude: 33.7201055, longitude: 73.0396641 };
+  const origin = { latitude: 33.7201055, longitude: 73.0396641,    latitudeDelta: LATITUDE_DELTA,
+    longitudeDelta: LONGITUDE_DELTA, };
   const destination = {
     latitude: 33.6967808,
     longitude: 73.0458092,
@@ -63,9 +68,10 @@ const MapDetails = ({ navigation, route }) => {
   // const [coordinates, setCoordinates] = useState(new AnimatedRegion(origin));
 
   const mapRef = useRef(null)
+  const UserTableRef = DataBaseRef.ref('/Ride_tracking').child(rideDetails._id);
 
   useEffect(() => {
-    console.log('Ride Details', rideDetails)
+    console.log('Ride Details on Map View', rideDetails)
     getEstimatedTimeOfArrival();
     onLatLongValueChanged()
     GetLocationftn()
@@ -78,11 +84,69 @@ const MapDetails = ({ navigation, route }) => {
       enableHighAccuracy: true,
       timeout: 15000,
     }).then(async (location) => {
-      // setMyDirection({ ...region, latitude: location.latitude, longitude: location.longitude})
+      updateLocationAgainstAppointment(location.latitude, location.longitude)
+      setMyDirection({ ...region, latitude: location.latitude, longitude: location.longitude })
+    })
+  }
+  const updateLocationAgainstAppointment = (lat, lng) => {
+    // console.log('__)_)', props.route.params?.appointmentDetail.id)
+    UserTableRef.set({
+      folderID: rideDetails._id,
+      passengerId: rideDetails.passenger._id,
+      driverLat: parseFloat(lat),
+      driverLong: parseFloat(lng)
+    })
+      .then(() => {
+        console.log('Data set.')
+      });
+  }
+
+  const callRideStatus = () => {
+    setLoading(true)
+    const folderID = rideDetails._id
+    var data = {
+      status: statusBtnText.toLowerCase(),
+      passengerId: rideDetails.passenger._id,
+      pickLocation: rideDetails.pickLocation,
+      dropLocation: rideDetails.dropLocation,
+      droplat: rideDetails.droplat,
+      droplong: rideDetails.droplong,
+      picklat: rideDetails.picklat,
+      picklong: rideDetails.picklong,
+      distanceDuration: distanceDuration
+    }
+    console.log('Change Ride Status Call Data', data)
+    console.log('Change Ride Status Call FolderID', folderID)
+
+    changeRideStatusCall(folderID, data).then((response) => {
+
+      if (response.status === 1) {
+        setLoading(false)
+
+        if (statusBtnText.toLowerCase() == 'end') {
+          navigation.navigate('CollectCash', { fareAmount: response.data.fareAmount, rideDetails: rideDetails})
+        }
+        else {
+          if (statusBtnText.toLowerCase() == 'arrived') {
+            setStatusBtnText('Picked')
+
+          }
+          else if (statusBtnText.toLowerCase() == 'picked') {
+            setStatusBtnText('End')
+          }
+        }
+      }
+      else {
+        console.log('response error', response.status)
+      }
+    }).catch((error) => {
+      console.log('error', error)
     })
   }
 
+
   const buildInAppNavigation = () => {
+    console.log('buildInAppNavigation')
     Alert.alert(
       "Warning",
       'Do you want to redirect to google app for direction',
@@ -103,10 +167,10 @@ const MapDetails = ({ navigation, route }) => {
   async function getEstimatedTimeOfArrival() {
 
     // get location of base
-    const BaseLocation = rideDetails.driver.location;
+    const BaseLocation = rideDetails.pickLocation;
 
     // get locations of targets
-    const TargetLocation = rideDetails.pickLocation;
+    const TargetLocation = rideDetails.dropLocation;
 
     // prepare final API call
     let ApiURL = "https://maps.googleapis.com/maps/api/distancematrix/json?";
@@ -123,6 +187,7 @@ const MapDetails = ({ navigation, route }) => {
       console.log("responseJson To Get Time and Distance:\n");
       console.log(responseJson.rows[0].elements[0].duration.text);
       setEstimatedTime(responseJson.rows[0].elements[0].duration.text)
+      setDistanceDuration(responseJson.rows[0].elements[0].distance.text.split(' ')[0])
     } catch (error) {
       console.error(error);
     }
@@ -155,38 +220,35 @@ const MapDetails = ({ navigation, route }) => {
         backgroundColor: '#38ef7d',
       }}>
       <View style={styles.container}>
+        <View style={{
+          position: 'absolute',
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          zIndex: 1,
+          padding: 5,
+          borderTopLeftRadius: 20,
+          borderBottomLeftRadius: 20,
+          borderBottomRightRadius: 20,
+          height: 60,
+          width: '90%',
+          marginTop: 80,
+          // backgroundColor: '#ffff',
+        }}>
+          <GradientButton height={50} title={'Use GoogleMap'} width={'45%'} style={{ alignSelf: 'flex-end' }} action={() => buildInAppNavigation()} />
+          {loading ? <Loader/>:
+          <GradientButton height={50} title={statusBtnText} width={'45%'} style={{ alignSelf: 'center' }} action={() => callRideStatus()} />
+}
+        </View>
         <MapView
           ref={mapRef}
-          initialRegion={region}
+          initialRegion={origin}
           style={StyleSheet.absoluteFill}
           onRegionChange={region => {
             setRegion({ region });
           }}
         >
-          {/* <Marker.Animated
-            ref={marker => { this.marker = marker }}
-            coordinate={coordinate}
-          >
-            <Image
-              source={require('../../assets/images/car_top.png')}
-              style={{ width: 50, height: 50 }}
-              title={'Islamabad'}
-              resizeMode="contain"
-            />
-          </Marker.Animated> */}
-          {/* {(coordinates.length >= 2) && (
-            <MapViewDirections
-              origin={coordinates[0]}
-              destination={coordinates[coordinates.length - 1]}
-              apikey={GOOGLE_MAPS_APIKEY}
-              strokeWidth={6}
-              strokeColor="#38ef7d"
-              optimizeWaypoints={true}
-            // onStart={(params) => {
-            //   console.log(`Started routing between "${params.origin}" and "${params.destination}"`);
-            // }}
-            />
-          )} */}
+
           <MapView.Marker
             coordinate={{
               latitude: 33.7201055, longitude: 73.0396641
@@ -225,10 +287,10 @@ const MapDetails = ({ navigation, route }) => {
             onReady={result => {
               console.log('Distance in KM ', result.distance)
               console.log('Duration in Min', result.duration)
-
-              mapRef.current.fitToCoordinates(result.coordinates, {
-
-              })
+              //{ distance: Number, duration: Number, coordinates: [], fare: Object, waypointOrder: [[]] }	Callback that is called when the routing has succesfully finished. Note: distance returned in kilometers and duration in minutes.
+              //   if (distance <= 500) {
+              //     sendArriveNotification()
+              // }
             }}
 
             onError={(errorMessage) =>
@@ -255,7 +317,7 @@ const MapDetails = ({ navigation, route }) => {
               />
             </View>
           } // Pass props component when collapsed
-          itemFull={<RideSummaryAndDetail navigation={navigation} rideInfo={rideDetails} actionforMap={() => buildInAppNavigation()} />} // Pass props component when show full
+          itemFull={<RideSummaryAndDetail navigation={navigation} rideInfo={rideDetails} actionforMap={() => buildInAppNavigation()} actionOnArrived={() => changeRideStatusCall()} statusBtnText={statusBtnText} />} // Pass props component when show full
           disablePressToShow={false} // Press item mini to show full
           style={{ backgroundColor: 'background:rgba(255,255,255, 0.3)', justifyContent: 'center', alignItems: 'center' }} // style for swipe
           animation="easeInEaseOut"
